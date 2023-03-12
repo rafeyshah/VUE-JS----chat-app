@@ -3,29 +3,29 @@
     <form class="login-form" @submit.prevent="Login">
       <div class="form-inner">
         <h1>Login to FireChat</h1>
-        <label for="username" >Username</label>
-        <input 
-          type="text" 
-          v-model="inputUsername" 
-          placeholder="Please enter your username." />
-        <input 
-          type="submit" 
-          value="Login" />
+        <label for="username">Username</label>
+        <input type="text" v-model="inputUsername" placeholder="Please enter your username." />
+        <input type="submit" value="Login" />
       </div>
     </form>
   </div>
   <div class="view chat" v-else>
     <header>
-      <button class="logout">Logout</button>
+      <button class="logout" @click="Logout">Logout</button>
       <h1>Welcome, {{ this.state.username }}</h1>
     </header>
     <section class="chat-box">
       <!-- Messages -->
-      // Messages
+      <div v-for="message in this.state.messages" :key="message.key" :class="(message.username === this.state.username ? 'message current-user' : 'message')">
+        <div class="message-inner">
+          <div class="username">{{ message.username }}</div>
+          <div class="content">{{ message.content }}</div>
+        </div>
+      </div>
     </section>
     <footer>
       <form @submit.prevent="SendMessage">
-        <input type="text" v-model="inputMessage" placeholder="Write a message"/>
+        <input type="text" v-model="inputMessage" placeholder="Write a message" />
         <input type="submit" value="Send" />
       </form>
     </footer>
@@ -51,15 +51,15 @@ export default {
   },
 
   methods: {
-    Login(){
-      if (this.inputUsername != "" || this.inputUsername != null){
+    Login() {
+      if (this.inputUsername != "" || this.inputUsername != null) {
         this.state.username = this.inputUsername;
         this.inputUsername = ""
       }
     },
-    SendMessage(){
+    SendMessage() {
       const messagesRef = db.database().ref("messages");
-      if (this.inputMessage === "" || this.inputMessage === null){
+      if (this.inputMessage === "" || this.inputMessage === null) {
         return
       }
 
@@ -70,9 +70,33 @@ export default {
 
       messagesRef.push(message);
       this.inputMessage = ""
-    }
-  }
+    },
 
+    Logout(){
+      this.state.username = ""
+    }
+  },
+
+  mounted() {
+    const messagesRef = db.database().ref("messages");
+
+    messagesRef.on('value', snapshot => {
+      const data = snapshot.val()
+      let messages = []
+
+      Object.keys(data).forEach(key => {
+        messages.push({
+          id: key,
+          username: data[key].username,
+          content: data[key].content
+        });
+      });
+
+      this.state.messages = messages;
+      // console.log(messages);
+      // console.log(this.state.messages);
+    })
+  }
 }
 </script>
 
